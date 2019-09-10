@@ -2,13 +2,13 @@ package com.tech.playinsdk;
 
 import com.tech.playinsdk.http.HttpException;
 import com.tech.playinsdk.http.HttpHelper;
-import com.tech.playinsdk.http.HttpListener;
+import com.tech.playinsdk.listener.HttpListener;
 import com.tech.playinsdk.listener.InitListener;
 import com.tech.playinsdk.model.ApiService;
 import com.tech.playinsdk.model.entity.Advert;
 import com.tech.playinsdk.model.entity.Config;
 import com.tech.playinsdk.model.entity.PlayInfo;
-import com.tech.playinsdk.util.PILog;
+import com.tech.playinsdk.util.PlayLog;
 
 import java.util.List;
 
@@ -23,7 +23,7 @@ public class PlayInSdk {
     private Config configData;
 
     public void setDebug(boolean debug) {
-        PILog.DEBUG = debug;
+        PlayLog.DEBUG = debug;
     }
 
     public String getApiHost() {
@@ -34,15 +34,11 @@ public class PlayInSdk {
     }
 
     /**
-     * 初始化.
+     * configWithKey.
      * @param sdkKey
      * @param initListener
      */
     public void configWithKey(final String sdkKey, final InitListener initListener) {
-//        if (null != configData) {
-//            initListener.success();
-//            return;
-//        }
         if (null == sdkKey || sdkKey.isEmpty()) {
             initListener.failure(new Exception("[PlayIn] configureWithKey: invalid key"));
             return;
@@ -66,7 +62,7 @@ public class PlayInSdk {
 
                     @Override
                     public void failure(HttpException ex) {
-                        PILog.e("[PlayIn] auth: internal onPlayError: " + ex);
+                        PlayLog.e("[PlayIn] auth: internal onPlayError: " + ex);
                         initListener.failure(new Exception("[PlayIn] auth: internal onPlayError"));
                     }
                 });
@@ -74,14 +70,14 @@ public class PlayInSdk {
 
             @Override
             public void failure(HttpException ex) {
-                PILog.e("[PlayIn] configureWithKey: internal onPlayError: " + ex);
+                PlayLog.e("[PlayIn] configureWithKey: internal onPlayError: " + ex);
                 initListener.failure(new Exception("[PlayIn] configureWithKey: internal  onPlayError"));
             }
         });
     }
 
     /**
-     * 检查是否有可玩设备。
+     * Check for playable equipment
      * @param adId
      * @param httpListener
      */
@@ -90,7 +86,7 @@ public class PlayInSdk {
     }
 
     /**
-     * 获取试玩游戏信息。
+     * Get game information
      * @param adId
      * @param httpListener
      */
@@ -99,7 +95,7 @@ public class PlayInSdk {
     }
 
     /**
-     * 获取游戏列表。
+     * Get the game list
      * @param httpListener
      */
     public void userAppKeys(final HttpListener<List<Advert>> httpListener) {
@@ -107,7 +103,7 @@ public class PlayInSdk {
     }
 
     /**
-     * 数据上报。
+     * data report
      * @param token
      * @param action
      */
@@ -115,8 +111,6 @@ public class PlayInSdk {
         ApiService.report(getApiHost(), token, action);
     }
 
-
-    // 设置http请求的sessionKey
     private void setHttpHelperSessionKey(String sessionKey) {
         HttpHelper.obtian().setSessionKey(sessionKey);
     }

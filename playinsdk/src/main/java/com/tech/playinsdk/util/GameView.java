@@ -1,33 +1,35 @@
-package com.tech.playinsdk;
+package com.tech.playinsdk.util;
 
 import android.content.Context;
 import android.graphics.PixelFormat;
+import android.os.Handler;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 import com.tech.playinsdk.connect.PlaySocket;
-import com.tech.playinsdk.decoder.BaseDecoder;
+import com.tech.playinsdk.decoder.AudioDecoder;
 import com.tech.playinsdk.decoder.FFmpegDecoder;
+import com.tech.playinsdk.decoder.VideoDecoder;
 import com.tech.playinsdk.model.entity.PlayInfo;
-import com.tech.playinsdk.util.Constants;
-import com.tech.playinsdk.util.PILog;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 
-class GameView extends SurfaceView implements SurfaceHolder.Callback, BaseDecoder.DecoderListener {
+public class GameView extends SurfaceView implements SurfaceHolder.Callback, VideoDecoder.DecoderListener {
 
     public interface GameListener {
         void onGameStart();
         void onGameError(Exception ex);
     }
 
+    private final Handler handler = new Handler();
     private final StringBuilder controlBuilder = new StringBuilder();
 
-    private BaseDecoder decoder;
+    private VideoDecoder videodecoder;
+    private AudioDecoder audioDecoder;
 
     private GameListener playListener;
     private PlayInfo playInfo;
@@ -56,10 +58,13 @@ class GameView extends SurfaceView implements SurfaceHolder.Callback, BaseDecode
         playSocket = new MyPlaySocket(playInfo.getServerIp(), playInfo.getServerPort());
         playSocket.connect();
 
-        decoder = new FFmpegDecoder(playInfo.getDeviceWidth(), playInfo.getDeviceHeight());
-//        decoder = new MediaDecoder(playInfo.getDeviceWidth(), playInfo.getDeviceHeight());
-        decoder.setDecoderListener(this);
-        decoder.start(getHolder().getSurface());
+        audioDecoder = new AudioDecoder();
+        audioDecoder.start();
+//
+        videodecoder = new FFmpegDecoder(playInfo.getDeviceWidth(), playInfo.getDeviceHeight());
+//        videodecoder = new MediaDecoder(playInfo.getDeviceWidth(), playInfo.getDeviceHeight());
+        videodecoder.setDecoderListener(this);
+        videodecoder.start();
     }
 
     @Override
@@ -69,33 +74,41 @@ class GameView extends SurfaceView implements SurfaceHolder.Callback, BaseDecode
         if (null != playSocket) {
             playSocket.disConnect();
         }
-
-        if (null != decoder) {
-            decoder.stop();
+        if (null != audioDecoder) {
+            audioDecoder.stop();
         }
+        if (null != videodecoder) {
+            videodecoder.stop();
+        }
+        handler.removeCallbacksAndMessages(null);
     }
 
     @Override
     protected void onWindowVisibilityChanged(int visibility) {
         super.onWindowVisibilityChanged(visibility);
         this.visibility = visibility;
-    }
-
-    @Override
-    public void surfaceCreated(SurfaceHolder holder) {
-        if (null != decoder) {
-            decoder.setDisplayHolder(holder);
+        if (null != videodecoder) {
+            if (visibility == 0) {
+                videodecoder.resume();
+            } else {
+                videodecoder.pause();
+            }
         }
     }
 
     @Override
-    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) { }
+    public void surfaceCreated(SurfaceHolder holder) {
+        if (null != videodecoder) {
+            videodecoder.setDisplayHolder(holder);
+        }
+    }
+
+    @Override
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+    }
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
-//        if (null != decoder) {
-//            decoder.stop();
-//        }
     }
 
     @Override
@@ -143,10 +156,9 @@ class GameView extends SurfaceView implements SurfaceHolder.Callback, BaseDecode
             obj.put("device_name", android.os.Build.BRAND);
             obj.put("os_type", Constants.OS_TYPE);
             obj.put("coder", "annex-b");  // 安卓annex-b, 苹果avcc
-//            obj.put("coder", "avcc");
             playSocket.sendText(obj.toString());
         } catch (Exception ex) {
-            PILog.e("sendUserContect  exception :" + ex);
+            PlayLog.e("sendUserContect  exception :" + ex);
         }
     }
 
@@ -158,20 +170,20 @@ class GameView extends SurfaceView implements SurfaceHolder.Callback, BaseDecode
 
         @Override
         public void onOpen() {
-            PILog.v("MyPlaySocket --> onMessage  onOpen ");
+            PlayLog.v("MyPlaySocket --> onMessage  onOpen ");
             sendUserContect();
-//            if (playInfo.getOsType() == 2) {
+            if (playInfo.getOsType() == 2) {
                 sendMessageToAndroid();
-//            }
+            }
         }
 
         @Override
         public void onMessage(String msg) {
-            PILog.v("MyPlaySocket --> onMessage  msg " + msg);
+            PlayLog.v("MyPlaySocket --> onMessage  msg " + msg);
             try {
                 JSONObject object = new JSONObject(msg);
-                if (0 != object.optInt("code") && null != playListener) {
-                    playListener.onGameError(new Exception(object.optString("onPlayError")));
+                if (0 != object.optInt("code")) {
+                    invokeGameError(new Exception(object.optString("onPlayError")));
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -179,24 +191,47 @@ class GameView extends SurfaceView implements SurfaceHolder.Callback, BaseDecode
         }
 
         @Override
-        public void onMessage(byte[] buf) {
+        public void onMessage(int streamType, byte[] buf) {
             if (GameView.this.visibility == 0) {
-//                PILog.e("收到视频数据, 长度为：" + buf.length);
-                decoder.sendVideoData(buf);
+                if (streamType == Constants.StreamType.H264) {
+                    if (null != videodecoder) videodecoder.sendVideoData(buf);
+                } else if (streamType == Constants.StreamType.PCM) {
+                    if (null != audioDecoder) audioDecoder.sendAudioData(buf);
+                }
             }
         }
 
         @Override
         public void onError(Exception ex) {
-            PILog.v("MyPlaySocket --> onError  " + ex);
-            if (null != playListener) {
-                playListener.onGameError(ex);
-            }
+            PlayLog.v("MyPlaySocket --> onError  " + ex);
+            invokeGameError(ex);
         }
     }
 
     @Override
     public void decoderSuccess() {
-        playListener.onGameStart();
+        invokeGameStart();
+    }
+
+    private void invokeGameStart() {
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (null != playListener) {
+                    playListener.onGameStart();
+                }
+            }
+        });
+    }
+
+    private void invokeGameError(final Exception ex) {
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (null != playListener) {
+                    playListener.onGameError(ex);
+                }
+            }
+        });
     }
 }

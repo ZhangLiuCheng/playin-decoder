@@ -7,7 +7,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Advert implements Serializable {
+public class Advert implements Serializable  {
 
     private String appKey;
     private String videoId;

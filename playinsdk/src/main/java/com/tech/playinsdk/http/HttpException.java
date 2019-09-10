@@ -42,16 +42,16 @@ public class HttpException extends Exception {
             this.message = ex.getMessage();
             return;
         }
-        if (ex instanceof JSONException || ex instanceof UnknownHostException) {
-            this.code = -1;
-            this.message = "服务器出错了";
-        } else if (ex instanceof ConnectException) {
+        if (ex instanceof UnknownHostException || ex instanceof ConnectException) {
             this.code = -2;
-            this.message = "请检查网络连接";
+            this.message = "network connection error";
+        } else if (ex instanceof JSONException) {
+            this.code = -1;
+            this.message = "Server internal error";
         } else {
             String message = ex.getMessage();
             if (message == null || TextUtils.isEmpty(message)) {
-                message = "网络不稳定，请稍后再试";
+                message = "other error";
             }
             this.code = -3;
             this.message = message;
@@ -60,6 +60,6 @@ public class HttpException extends Exception {
 
     @Override
     public String toString() {
-        return "[HttpException] code(" + code + ")  messsage(" + message + ")";
+        return "[HttpException] " + message;
     }
 }

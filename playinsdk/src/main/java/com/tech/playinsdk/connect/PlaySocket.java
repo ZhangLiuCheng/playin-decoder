@@ -1,7 +1,7 @@
 package com.tech.playinsdk.connect;
 
-import com.tech.playinsdk.util.PILog;
-import com.tech.playinsdk.util.Tool;
+import com.tech.playinsdk.util.Common;
+import com.tech.playinsdk.util.PlayLog;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,13 +10,13 @@ import java.net.Socket;
 import java.net.SocketException;
 
 /**
- * 建立连接.
+ * Establish a connection.
  */
 public abstract class PlaySocket extends Thread {
 
     public abstract void onOpen();
     public abstract void onMessage(String msg);
-    public abstract void onMessage(byte[] buf);
+    public abstract void onMessage(int streamType, byte[] buf);
     public abstract void onError(Exception ex);
 
     private String ip;
@@ -44,18 +44,20 @@ public abstract class PlaySocket extends Thread {
     }
 
     public void disConnect() {
-        PILog.v("断开连接");
-        interrupt();
         try {
+            interrupt();
             if (null != socket) {
                 socket.shutdownOutput();
                 socket.shutdownInput();
                 socket.close();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+//            e.printStackTrace();
         }
-        Tool.closeStream(istream, ostream);
+        if (null != mWriteThread) {
+            mWriteThread.interrupt();
+        }
+        Common.closeStream(istream, ostream);
     }
 
     public void sendText(String text) {
@@ -63,7 +65,7 @@ public abstract class PlaySocket extends Thread {
     }
 
     /**
-     * 发送触摸事件.
+     * Send touch event.
      * @param control
      */
     public void sendControl(String control) {
@@ -71,8 +73,8 @@ public abstract class PlaySocket extends Thread {
     }
 
     /**
-     * @param packType  1 控制  2 二进制流
-     * @param streamType  0 触摸  1 H264  2 音频  6 android
+     * @param packType  1 control  2 byte stream
+     * @param streamType  0 touch  1 H264  2 audio  6 android
      * @param control
      */
     public void sendStream(byte packType, byte streamType, String control) {
@@ -81,14 +83,14 @@ public abstract class PlaySocket extends Thread {
 
     @Override
     public void run() {
-        PILog.v("开始连接socket ip: " + ip + " port:" + port);
+        PlayLog.v("Socket begin to connect  ip: " + ip + " port:" + port);
         try {
             socket = new Socket(ip, port);
             socket.setSoTimeout(0);
             socket.setReceiveBufferSize(100 * 1024);
             socket.setSendBufferSize(1024);
             socket.setTcpNoDelay(true);
-            PILog.v("socket 连接成功");
+            PlayLog.v("Socket connect successed");
             onOpen();
             istream = socket.getInputStream();
             ostream = socket.getOutputStream();
@@ -98,7 +100,7 @@ public abstract class PlaySocket extends Thread {
             // 读取数据流(循环阻塞)
             readData();
         } catch (SocketException ex) {
-            PILog.e("连接或读取异常： " + ex);
+            PlayLog.e("Socket connect error： " + ex);
             onError(ex);
         } catch (IOException ex) {
             onError(ex);
@@ -114,8 +116,8 @@ public abstract class PlaySocket extends Thread {
                 }
 
                 @Override
-                public void buffer(byte[] buf) {
-                    onMessage(buf);
+                public void buffer(int streamType, byte[] buf) {
+                    onMessage(streamType, buf);
                 }
             });
         } catch (IOException ex) {
@@ -133,9 +135,8 @@ public abstract class PlaySocket extends Thread {
                     ostream.flush();
                 }
             } catch (InterruptedException e) {
-                // 主动断开连接，不做任何处理
             } catch (IOException e) {
-                PILog.e("发送异常： " + e);
+                PlayLog.e("Socket send error： " + e);
                 onError(e);
             }
         }

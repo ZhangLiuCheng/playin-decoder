@@ -6,7 +6,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
 
-import com.tech.playinsdk.util.PILog;
+import com.tech.playinsdk.listener.HttpListener;
+import com.tech.playinsdk.util.PlayLog;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -65,7 +66,7 @@ public class HttpHelper {
                     if(status == 200){
                         is = connection.getInputStream();
                     } else {
-                        throw new HttpException(-1, "服务端状态码:" + status);
+                        throw new HttpException(-1, "responseCode:" + status);
                     }
                     br = new BufferedReader(new InputStreamReader(is));
                     final StringBuilder sb = new StringBuilder();
@@ -75,6 +76,7 @@ public class HttpHelper {
                     }
                     deliverResult(url, listener, sb.toString());
                 } catch (Exception e) {
+                    PlayLog.v("deliverFailure:  " + url + "  " + e);
                     e.printStackTrace();
                     deliverFailure(listener, new HttpException(e));
                 } finally {
@@ -150,7 +152,7 @@ public class HttpHelper {
     }
 
     private void deliverResult(String url, final HttpListener listener, final String reponse) throws JSONException {
-        PILog.v("deliverResult:  " + url + "  " + reponse);
+        PlayLog.v("deliverResult:  " + url + "  " + reponse);
         JSONObject result = new JSONObject(reponse);
         if (result.getInt("code") == 0) {
             deliverSuccess(listener, result.optJSONObject("data"));

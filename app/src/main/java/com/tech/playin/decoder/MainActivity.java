@@ -9,7 +9,7 @@ import android.widget.Toast;
 
 import com.tech.playinsdk.PlayInSdk;
 import com.tech.playinsdk.http.HttpException;
-import com.tech.playinsdk.http.HttpListener;
+import com.tech.playinsdk.listener.HttpListener;
 import com.tech.playinsdk.listener.InitListener;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -64,7 +64,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     // Check game can to play
     private void checkAvailable() {
-        PlayInSdk.getInstance().checkAvailable(Constants.ADID, new HttpListener<Boolean>() {
+        PlayInSdk.getInstance().checkAvailable(Constants.SDK_KEY, new HttpListener<Boolean>() {
             @Override
             public void success(Boolean result) {
                 mPlay.setVisibility(View.VISIBLE);

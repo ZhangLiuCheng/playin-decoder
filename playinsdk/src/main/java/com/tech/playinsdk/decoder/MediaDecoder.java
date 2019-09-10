@@ -12,7 +12,7 @@ import java.nio.ByteBuffer;
 import static android.media.MediaFormat.MIMETYPE_VIDEO_AVC;
 
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
-public class MediaDecoder extends BaseDecoder {
+public class MediaDecoder extends VideoDecoder {
 
     private MediaCodec mediaCodec;
     private MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
@@ -25,11 +25,7 @@ public class MediaDecoder extends BaseDecoder {
     protected boolean initDecoder(int videoWidth, int videoHeight, Surface surface) {
         try {
             MediaFormat format = MediaFormat.createVideoFormat(MIMETYPE_VIDEO_AVC, videoWidth, videoHeight);
-//            format.setInteger(MediaFormat.KEY_BIT_RATE, videoWidth * videoHeight);
             format.setInteger(MediaFormat.KEY_FRAME_RATE, 20);
-//            format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
-
-//            format.setLong(MediaFormat.KEY_MAX_INPUT_SIZE, width * height);
 
             byte[] header_sps = {0, 0, 0, 1, 39, 77, 0, 30, -85, 64, -64, 42, -14, -38};
             byte[] header_pps = {0, 0, 0, 1, 40, -18, 60, 48};
@@ -56,15 +52,13 @@ public class MediaDecoder extends BaseDecoder {
             ByteBuffer inputBuffer = mediaCodec.getInputBuffers()[inputBufferIndex];
             inputBuffer.clear();
             inputBuffer.put(buf, offset, length);
-//            if (value == 7 || value == 8) {
-//                mediaCodec.queueInputBuffer(inputBufferIndex, 0, length, 0, MediaCodec.BUFFER_FLAG_CODEC_CONFIG);
-//            } else if (value == 5) {
-//                mediaCodec.queueInputBuffer(inputBufferIndex, 0, length, 0, MediaCodec.BUFFER_FLAG_KEY_FRAME);
-//            } else {
-//                mediaCodec.queueInputBuffer(inputBufferIndex, 0, length, 0, 0);
-//            }
-            mediaCodec.queueInputBuffer(inputBufferIndex, 0, length, 0, 0);
-
+            if (value == 7 || value == 8) {
+                mediaCodec.queueInputBuffer(inputBufferIndex, 0, length, 0, MediaCodec.BUFFER_FLAG_CODEC_CONFIG);
+            } else if (value == 5) {
+                mediaCodec.queueInputBuffer(inputBufferIndex, 0, length, 0, MediaCodec.BUFFER_FLAG_KEY_FRAME);
+            } else {
+                mediaCodec.queueInputBuffer(inputBufferIndex, 0, length, 0, 0);
+            }
             try {
                 Thread.sleep(20);
             } catch (InterruptedException e) {

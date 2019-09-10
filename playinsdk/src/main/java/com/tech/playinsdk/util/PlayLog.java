@@ -2,9 +2,9 @@ package com.tech.playinsdk.util;
 
 import android.util.Log;
 
-public class PILog {
+public class PlayLog {
 
-    private static final String sTAG = "PI_LOG";
+    private static final String sTAG = "PLAYIN";
 
     public static boolean DEBUG = true;
 

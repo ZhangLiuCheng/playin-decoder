@@ -2,12 +2,12 @@ package com.tech.playinsdk.model;
 
 import com.tech.playinsdk.http.HttpException;
 import com.tech.playinsdk.http.HttpHelper;
-import com.tech.playinsdk.http.HttpListener;
+import com.tech.playinsdk.listener.HttpListener;
 import com.tech.playinsdk.model.entity.Advert;
 import com.tech.playinsdk.model.entity.Config;
 import com.tech.playinsdk.model.entity.PlayInfo;
 import com.tech.playinsdk.util.Constants;
-import com.tech.playinsdk.util.PILog;
+import com.tech.playinsdk.util.PlayLog;
 
 import org.json.JSONObject;
 
@@ -34,7 +34,7 @@ public class ApiService {
     }
 
     /**
-     * 用户认证
+     * userAuth
      * @param host
      * @param sdkKey
      * @param listener
@@ -57,7 +57,7 @@ public class ApiService {
     }
 
     /**
-     * 判断是否有效
+     * userAvailable
      * @param host
      * @param adId
      * @param listener
@@ -81,7 +81,7 @@ public class ApiService {
     }
 
     /**
-     * 获取试玩信心.
+     * userActionsPlay.
      * @param host
      * @param adId
      * @param sdkKey
@@ -92,8 +92,7 @@ public class ApiService {
                                        String deviceId, final HttpListener<PlayInfo> listener) {
         Map<String, String> params = new HashMap<>();
         params.put("ad_id", adId);
-//        params.put("os_type", Constants.OS_TYPE);
-        params.put("os_type", "1");
+        params.put("os_type", Constants.OS_TYPE);
         params.put("sdk_key", sdkKey);
         params.put("sdk_device_id", deviceId);
         params.put("sdk_version", Constants.VERSION);
@@ -143,12 +142,12 @@ public class ApiService {
                 new HttpListener<JSONObject>() {
                     @Override
                     public void success(JSONObject result) {
-                        PILog.e("[PIReport] report success ");
+                        PlayLog.e("[PIReport] report success ");
                     }
 
                     @Override
                     public void failure(HttpException e) {
-                        PILog.e("[PIReport] endplay report error: " + e);
+                        PlayLog.e("[PIReport] endplay report error: " + e);
                     }
                 });
     }

@@ -14,14 +14,15 @@ public class Constants {
 
 
     public final static class PacketType {
-        public final static byte CONTROL = 1;               // 控制
-        public final static byte STREAM = 2;                // 流
+        public final static byte CONTROL = 1;
+        public final static byte STREAM = 2;
     }
 
     public final static class StreamType {
-        public final static byte TOUCH = 0;                 // 触摸
-        public final static byte H264 = 1;                  // H264
-        public final static byte AAC = 2;                   // 音频
-        public final static byte ANDROID_VIDEO_START = 6;   //Android
+        public final static byte TOUCH = 0;
+        public final static byte H264 = 1;
+        public final static byte AAC = 2;
+        public final static byte PCM = 3;
+        public final static byte ANDROID_VIDEO_START = 6;
     }
 }

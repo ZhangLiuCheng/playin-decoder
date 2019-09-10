@@ -8,7 +8,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
 add_library(
         playin
         SHARED
-        playin.cpp)
+        Playin.cpp FFmpeg.cpp)
 
 find_library(
         log-lib

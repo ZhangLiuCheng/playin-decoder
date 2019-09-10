@@ -10,13 +10,18 @@ import java.nio.ByteOrder;
 import java.util.concurrent.ArrayBlockingQueue;
 
 /**
- * 处理发送和接受数据.
+ * Process sending and receiving data.
  */
 public class DataProcess {
 
     public interface ReceiveCallback {
         void message(String message);
-        void buffer(byte[] buf);
+
+        /**
+         * @param streamType StreamType.H264
+         * @param buf
+         */
+        void buffer(int streamType, byte[] buf);
     }
 
     private ArrayBlockingQueue<byte[]> sendQueue;
@@ -29,32 +34,29 @@ public class DataProcess {
     }
 
 
+    private int type;
+    private byte[] msgLengthBuf = new byte[4];
+    private byte[] packetBuf = new byte[4];
+    private byte[] msgIdBuf = new byte[2];
+
     public void receiveData(InputStream is, ReceiveCallback callback) throws IOException {
         DataInputStream dis = new DataInputStream(is);
-
-        int type;
-        byte[] msgLengthBuf = new byte[4];
-        byte[] packetBuf = new byte[4];
-        byte[] msgIdBuf = new byte[2];
-
         while (!Thread.interrupted()) {
             type = dis.read();
             dis.readFully(msgLengthBuf);
             int msgLength = bytesToInt(msgLengthBuf);
-            if (type == 1) {
+            if (type == Constants.PacketType.CONTROL) {
                 dis.readFully(packetBuf);
                 dis.readFully(msgIdBuf);
                 byte[] contentBuf = new byte[msgLength - packetBuf.length - msgIdBuf.length];
                 dis.readFully(contentBuf);
                 callback.message(new String(contentBuf));
 
-            } else if (type == 2) {
+            } else if (type == Constants.PacketType.STREAM) {
                 int streamType = dis.read();
                 byte[] streamBuf = new byte[msgLength - 1];
                 dis.readFully(streamBuf);
-                if (streamType == 1 || streamType == 6) {
-                    callback.buffer(streamBuf);
-                }
+                callback.buffer(streamType, streamBuf);
             }
         }
     }
