@@ -41,7 +41,7 @@ android {
 
     sourceSets {
         main {
-            jniLibs.srcDirs = ['src/main/libs']
+            jniLibs.srcDirs = ['src/main/cpp/yuv/libs']
             jni.srcDirs = []
         }
     }

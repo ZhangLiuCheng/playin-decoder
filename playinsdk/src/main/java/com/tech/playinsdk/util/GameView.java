@@ -48,7 +48,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Vid
 
     private void init() {
         SurfaceHolder surfaceHolder = getHolder();
-        surfaceHolder.setFormat(PixelFormat.TRANSLUCENT);
+//        surfaceHolder.setFormat(PixelFormat.TRANSLUCENT);
+        surfaceHolder.setFormat(PixelFormat.RGBA_8888);
         surfaceHolder.addCallback(this);
     }
 

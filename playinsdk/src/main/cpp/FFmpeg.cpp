@@ -5,6 +5,11 @@
 #include "FFmpeg.h"
 #include "PILog.h"
 
+extern "C" {
+#include "yuv/include/libyuv/convert_argb.h"
+#include "yuv/include/libyuv.h"
+}
+
 FFmpeg::FFmpeg() {
 };
 
@@ -66,33 +71,40 @@ int FFmpeg::decoding(JNIEnv *env, jobject instance, jbyteArray data) {
         return -1;
     }
 
-    int numBytes = av_image_get_buffer_size(AV_PIX_FMT_RGBA, pCodecCtx->width, pCodecCtx->height, 1);
-    uint8_t *buffer = (uint8_t *) av_malloc(numBytes * sizeof(uint8_t));
-    av_image_fill_arrays(pFrameRGBA->data, pFrameRGBA->linesize, buffer, AV_PIX_FMT_RGBA,
-                         pCodecCtx->width, pCodecCtx->height, 1);
-
     avcodec_decode_video2(pCodecCtx, pFrame, &got_frame, &packet);
 
     if (got_frame && nativeWindow != NULL) {
-        ANativeWindow_lock(nativeWindow, &windowBuffer, 0);
+        ANativeWindow_lock(nativeWindow, &windowBuffer, NULL);
+
+        av_image_fill_arrays(pFrameRGBA->data, pFrameRGBA->linesize, static_cast<const uint8_t *>(windowBuffer.bits),
+                AV_PIX_FMT_RGBA, pCodecCtx->width, pCodecCtx->height, 1);
+//        avpicture_fill(reinterpret_cast<AVPicture *>(pFrameRGBA->data), static_cast<const uint8_t *>(windowBuffer.bits),
+//                       AV_PIX_FMT_RGBA, pCodecCtx->width, pCodecCtx->height);
+
         sws_scale(sws_ctx, (uint8_t const *const *) pFrame->data,
                   pFrame->linesize, 0, pCodecCtx->height,
                   pFrameRGBA->data, pFrameRGBA->linesize);
 
+//        libyuv::I420ToARGB(pFrame->data[0], pFrame->linesize[0],
+//                   pFrame->data[2], pFrame->linesize[2],
+//                   pFrame->data[1], pFrame->linesize[1],
+//                   pFrameRGBA->data[0], pFrameRGBA->linesize[0],
+//                   pCodecCtx->width, pCodecCtx->height);
+
+
+
+
         uint8_t *dst = (uint8_t *) windowBuffer.bits;
         int dstStride = windowBuffer.stride * 4;
-        uint8_t *src = (uint8_t *) (pFrameRGBA->data[0]);
+        uint8_t *src = pFrameRGBA->data[0];
         int srcStride = pFrameRGBA->linesize[0];
-
         int h;
         for (h = 0; h < videoHeight; h++) {
             memcpy(dst + h * dstStride, src + h * srcStride, srcStride);
         }
 
         ANativeWindow_unlockAndPost(nativeWindow);
-
     }
-    av_free(buffer);
     av_free(pFrameRGBA);
     av_free(pFrame);
     av_free_packet(&packet);
