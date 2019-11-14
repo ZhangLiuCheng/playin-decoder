@@ -292,7 +292,7 @@ int I420Mirror(const uint8_t* src_y,
 #define I400ToI400Mirror I400Mirror
 
 // I400 mirror.  A single plane is mirrored horizontally.
-// Pass negative height to achieve 180 degree rotation.
+// Pass negative height to achieve 180 rotate rotation.
 LIBYUV_API
 int I400Mirror(const uint8_t* src_y,
                int src_stride_y,

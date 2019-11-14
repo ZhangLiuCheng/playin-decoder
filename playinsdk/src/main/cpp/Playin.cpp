@@ -25,12 +25,12 @@ FFmpeg* getFFmpeg(JNIEnv *env, jobject instance) {
 extern "C"
 JNIEXPORT jint JNICALL
 Java_com_tech_playinsdk_decoder_FFmpegDecoder_ffmpegInit(JNIEnv *env, jobject instance, jint width,
-                                                         jint height, jobject surface) {
+                                                         jint height, jint rotate, jobject surface) {
     FFmpeg *ffmpeg = getFFmpeg(env, instance);
     if (NULL == ffmpeg) {
         ffmpeg = new FFmpeg();
         saveFFmpeg(env, instance, ffmpeg);
-        return ffmpeg->init(env, instance, width, height, surface);
+        return ffmpeg->init(env, instance, width, height, rotate, surface);
     } else {
         ffmpeg->updateSurface(env, surface);
         return 1;
@@ -54,5 +54,15 @@ Java_com_tech_playinsdk_decoder_FFmpegDecoder_ffmpegClose(JNIEnv *env, jobject i
     if (NULL != ffmpeg) {
         ffmpeg->close();
         delete ffmpeg;
+    }
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_tech_playinsdk_decoder_FFmpegDecoder_ffmpegUpdateRotate(JNIEnv *env, jobject instance,
+                                                                 jint rotate) {
+    FFmpeg *ffmpeg = getFFmpeg(env, instance);
+    if (NULL != ffmpeg) {
+        ffmpeg->updateRotate(env, rotate);
     }
 }

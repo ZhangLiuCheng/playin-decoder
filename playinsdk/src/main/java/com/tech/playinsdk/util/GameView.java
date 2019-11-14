@@ -48,8 +48,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Vid
 
     private void init() {
         SurfaceHolder surfaceHolder = getHolder();
-//        surfaceHolder.setFormat(PixelFormat.TRANSLUCENT);
-        surfaceHolder.setFormat(PixelFormat.RGBA_8888);
+        surfaceHolder.setFormat(PixelFormat.TRANSLUCENT);
         surfaceHolder.addCallback(this);
     }
 
@@ -62,7 +61,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Vid
         audioDecoder = new AudioDecoder();
         audioDecoder.start();
 //
-        videodecoder = new FFmpegDecoder(playInfo.getDeviceWidth(), playInfo.getDeviceHeight());
+        videodecoder = new FFmpegDecoder(playInfo.getDeviceWidth(), playInfo.getDeviceHeight(), 0);
 //        videodecoder = new MediaDecoder(playInfo.getDeviceWidth(), playInfo.getDeviceHeight());
         videodecoder.setDecoderListener(this);
         videodecoder.start();

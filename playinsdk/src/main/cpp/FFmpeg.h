@@ -20,20 +20,26 @@ extern "C" {
 class FFmpeg {
 
 public:
-    ANativeWindow *nativeWindow;
-    ANativeWindow_Buffer windowBuffer;
-    AVCodec *pCodec;
-    AVCodecContext *pCodecCtx;
-    struct SwsContext *sws_ctx;
-    int len, got_frame;
-
-public:
     FFmpeg();
     ~FFmpeg();
-    int init(JNIEnv *env, jobject instance, jint width, jint height, jobject surface);
+    int init(JNIEnv *env, jobject instance, jint width, jint height, jint rotate, jobject surface);
     int decoding(JNIEnv *env, jobject instance, jbyteArray data);
     void close();
     void updateSurface(JNIEnv *env, jobject surface);
+    void updateRotate(JNIEnv *env, jint rotate);
+
+private:
+    ANativeWindow *nativeWindow = NULL;
+    ANativeWindow_Buffer windowBuffer;
+    AVCodecContext *pCodecCtx = NULL;
+    AVCodec *pCodec;
+    jobject surface;
+    int rotate, len, got_frame;
+
+    void resetNativeWindow(JNIEnv *env);
+    AVFrame* processYuv(AVFrame *yuvFrame);
+    AVFrame* mallocRGBFrame(int width, int height);
+    void renderWindow(AVFrame *destFrame);
 };
 
 

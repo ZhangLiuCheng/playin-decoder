@@ -1,5 +1,6 @@
 package com.tech.playinsdk;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.text.TextUtils;
@@ -32,7 +33,6 @@ public class PlayInView extends FrameLayout implements View.OnClickListener, Gam
 
     private boolean isDetached;
     private boolean isFinish, isDownload;
-
 
     public PlayInView(Context context) {
         super(context);
@@ -96,6 +96,11 @@ public class PlayInView extends FrameLayout implements View.OnClickListener, Gam
             @Override
             public void success(PlayInfo result) {
                 if (isDetached) return;
+
+                Activity curActivity = (Activity) getContext();
+//                curActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+//                curActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+
                 playInfo = result;
                 initView(result);
                 initData(result);

@@ -10,25 +10,24 @@ public class FFmpegDecoder extends VideoDecoder {
         System.loadLibrary("playin");
     }
 
-    public native int ffmpegInit(int width, int height, Surface surface);
+    public native int ffmpegInit(int width, int height, int rotate, Surface surface);
     public native int ffmpegDecoding(byte[] data);
     public native void ffmpegClose();
-    public long ffmpegHandle;            // Don't delete, c holds the pointer to the object
+    public native void ffmpegUpdateRotate(int rotate);
+
+    public long ffmpegHandle;            // Don't delete, native holds the pointer to the object
 
     private boolean init;
 
-    public FFmpegDecoder(int videoWidth, int videoHeight) {
-        super(videoWidth, videoHeight);
+    public FFmpegDecoder(int videoWidth, int videoHeight, int videoRotate) {
+        super(videoWidth, videoHeight, videoRotate);
     }
 
     @Override
-    protected boolean initDecoder(int videoWidth, int videoHeight, Surface surface) {
+    protected boolean initDecoder(Surface surface) {
 //        releaseDecoder();
-        boolean result = ffmpegInit(videoWidth, videoHeight, surface) >= 0;
+        boolean result = ffmpegInit(videoWidth, videoHeight, videoRotate, surface) >= 0;
         init = result;
-
-        PlayLog.e("----------  initDecoder  " + init);
-
         return result;
     }
 
@@ -44,7 +43,6 @@ public class FFmpegDecoder extends VideoDecoder {
 
     @Override
     protected void releaseDecoder() {
-        PlayLog.e("----------  releaseDecoder  " + init);
         if (init) {
             ffmpegClose();
         }
@@ -52,9 +50,10 @@ public class FFmpegDecoder extends VideoDecoder {
     }
 
     @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
-//        ffmpegClose();
-        PlayLog.e("----------  finalize");
+    public void updateRotate(int videoRotate) {
+        this.videoRotate = videoRotate;
+        if (init) {
+            ffmpegUpdateRotate(videoRotate);
+        }
     }
 }

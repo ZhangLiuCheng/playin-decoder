@@ -16,25 +16,27 @@ public abstract class VideoDecoder implements Runnable {
     }
 
     private DecoderListener decoderListener;
-
     private BlockingQueue<byte[]> videoQueue = new LinkedBlockingQueue<>(30);
-    private int videoWidth;
-    private int videoHeight;
+
+    protected int videoWidth;
+    protected int videoHeight;
+    protected int videoRotate;
+
     private Thread thread;
 
     private boolean loopFlag;
     private boolean initCodec;
     private boolean decodeSuccess;
 
-    protected abstract boolean initDecoder(int videoWidth, int videoHeight, Surface surface);
-
+    protected abstract boolean initDecoder(Surface surface);
     protected abstract void onFrame(byte[] buf, int offset, int length);
-
     protected abstract void releaseDecoder();
+    public abstract void updateRotate(int videoRotate);
 
-    public VideoDecoder(int videoWidth, int videoHeight) {
+    public VideoDecoder(int videoWidth, int videoHeight, int videoRotate) {
         this.videoWidth = videoWidth;
         this.videoHeight = videoHeight;
+        this.videoRotate = videoRotate;
     }
 
     public void setDecoderListener(DecoderListener decoderListener) {
@@ -58,7 +60,7 @@ public abstract class VideoDecoder implements Runnable {
     public synchronized void setDisplayHolder(SurfaceHolder holder) {
         PlayLog.e("VideoDecoder  setDisplayHolder");
 
-        if (initDecoder(this.videoWidth, this.videoHeight, holder.getSurface())) {
+        if (initDecoder(holder.getSurface())) {
             initCodec = true;
         }
     }
